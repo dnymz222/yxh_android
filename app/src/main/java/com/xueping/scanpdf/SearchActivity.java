@@ -1,6 +1,7 @@
 package com.xueping.scanpdf;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -29,10 +30,7 @@ import java.util.List;
 
 import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity implements PullLoadMoreRecyclerView.PullLoadMoreListener{
-
-
-
+public class SearchActivity extends AppCompatActivity implements PullLoadMoreRecyclerView.PullLoadMoreListener{
 
     private RecyclerView mRecyclerView;
     private PullLoadMoreRecyclerView mPullLoadMoreRecyclerView;
@@ -40,33 +38,49 @@ public class MainActivity extends AppCompatActivity implements PullLoadMoreRecyc
     private FishPinpaiGoodsAdapter mAdapter;
     private LinearLayoutManager mLayoutManager;
     private Xunquannetwork mnetwork;
+    private SearchView msearchView;
+
+    private String queryString ;
 
 
+    private Handler mhandler = new Handler();
+
+    private Runnable finishAction = new Runnable() {
+        @Override
+        public void run() {
+
+            finish();
+
+        }
+    };
+
+
+    private Runnable showkeyboard = new Runnable() {
+        @Override
+        public void run() {
+
+            msearchView.setIconified(false);
+
+        }
+    };
 
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_search);
 
-        ImageView addimageView = (ImageView)findViewById(R.id.tianjia);
-        addimageView.setOnClickListener(new View.OnClickListener() {
+        ImageView fanhuiImageView = (ImageView)findViewById(R.id.liebiao);
+        fanhuiImageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this,AddActivity.class);
-                startActivity(intent);
+               Intent intent = new Intent(SearchActivity.this,MainActivity.class);
+               startActivity(intent);
             }
         });
 
 
-        ImageView sousuoimageView = (ImageView)findViewById(R.id.back);
-        sousuoimageView.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                finish();
-            }
-        });
 
 
         mPullLoadMoreRecyclerView = (PullLoadMoreRecyclerView) findViewById(R.id.secondcategoryrecycleview);
@@ -107,9 +121,66 @@ public class MainActivity extends AppCompatActivity implements PullLoadMoreRecyc
         //mRecyclerView.setLayoutManager(linearLayoutManager);
         mnetwork = new Xunquannetwork();
 
-        mCount = 1;
-        loadData(mCount);
+        msearchView = (SearchView) findViewById(R.id.searchresultserchview);
+
+
+        mhandler.postDelayed(showkeyboard,250);
+
+        msearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            // 当点击搜索按钮时触发该方法
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+
+                queryString = query;
+                mCount = 1;
+                loadData(mCount);
+
+//                if (showHint) {
+//                    suggestView.setVisibility(View.INVISIBLE);
+//                    mRecyclerView.setVisibility(View.VISIBLE);
+//                    showHint = false;
+//                }
+
+
+                return false;
+            }
+
+            // 当搜索内容改变时触发该方法
+            @Override
+            public boolean onQueryTextChange(String newText) {
+//                if (!TextUtils.isEmpty(newText)){
+//                    mListView.setFilterText(newText);
+//                }else{
+//                    mListView.clearTextFilter();
+
+
+//                }
+
+//                if (!showHint) {
+//                    suggestView.setVisibility(View.VISIBLE);
+//                    mRecyclerView.setVisibility(View.INVISIBLE);
+//                    showHint = true;
+//                }
+
+
+//                loadHint(newText);
+
+
+                return false;
+            }
+
+
+        });
+
+
+
+//
+//        setCursorIcon();
+
+//        mCount = 1;
+//        loadData(mCount);
     }
+
 
 
     @Override
@@ -126,15 +197,28 @@ public class MainActivity extends AppCompatActivity implements PullLoadMoreRecyc
 
     void loadData(final int count) {
 
+        if (queryString == null) {
+            mPullLoadMoreRecyclerView.setPullLoadMoreCompleted();
+            return;
+        }
+
         HashMap map  =  new HashMap();
         map.put("page",Integer.toString(mCount));
+        map.put("q",queryString);
 
-        mnetwork.customerlist(map, new NetCallback() {
+
+
+
+
+
+
+
+
+
+        mnetwork.customersearch(map, new NetCallback() {
             @Override
-            public void onFailure(IOException e, int code) {
-
+            public void onFailure( IOException e,int code) {
                 final IOException ae = e;
-
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -153,7 +237,7 @@ public class MainActivity extends AppCompatActivity implements PullLoadMoreRecyc
                         @Override
                         public void run() {
                             mPullLoadMoreRecyclerView.setPullLoadMoreCompleted();
-                            // Toast.makeText(MyApplication.getApplication(), e.getMessage(), Toast.LENGTH_SHORT).show();
+                             Toast.makeText(MyApplication.getApplication(), "没有数据", Toast.LENGTH_SHORT).show();
                         }
                     });
 
@@ -174,6 +258,11 @@ public class MainActivity extends AppCompatActivity implements PullLoadMoreRecyc
                         if (count==1) {
                             mAdapter.getMdataList().clear();
 
+                            if (couponItemnlist.size() == 0) {
+
+                                Toast.makeText(MyApplication.getApplication(), "没有数据", Toast.LENGTH_SHORT).show();
+                            }
+
 
                         }else  {
 
@@ -189,20 +278,8 @@ public class MainActivity extends AppCompatActivity implements PullLoadMoreRecyc
                     }
                 });
 
-
-
             }
         });
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -261,7 +338,7 @@ public class MainActivity extends AppCompatActivity implements PullLoadMoreRecyc
 
 
 
-                Intent intent = new Intent(MainActivity.this,AddActivity.class);
+                Intent intent = new Intent(SearchActivity.this,AddActivity.class);
                 intent.putExtra("modify",1);
                 intent.putExtra("customer",item);
                 startActivity(intent);
@@ -289,7 +366,7 @@ public class MainActivity extends AppCompatActivity implements PullLoadMoreRecyc
         // Create new views (invoked by the layout manager)
         @Override
         public FishPinpaiGoodsAdapter.ViewHolder onCreateViewHolder(ViewGroup parent,
-                                                                    int viewType) {
+                                                                                 int viewType) {
             // create a new view
 //            couponItemView v =(View) LayoutInflater.from(parent.getContext()).inflate(
 //                    R.layout.couponlist_item, parent, false);
@@ -330,6 +407,4 @@ public class MainActivity extends AppCompatActivity implements PullLoadMoreRecyc
 
 
     }
-
-
 }
